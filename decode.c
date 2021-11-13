@@ -3,7 +3,7 @@
  * @author Matthew Callahan from Derek Molloy
  * @date   11 November 2021
  * @version 0.1
- * @brief   A module to write to UART with a three repeat code 
+ * @brief   A module to decode a three-repeat code 
  * based on introductory code from Derek Molloy.
  * @see http://www.derekmolloy.ie/ for a full description and follow-up descriptions.
  */
@@ -16,13 +16,13 @@
 #include <linux/uaccess.h>          // Required for the copy to user function
 
 
-#define  DEVICE_NAME "UARTdecode"    ///< The device will appear at /dev/ebbchar using this value
+#define  DEVICE_NAME "UARTdecode"    ///< The device will appear at /dev/UARTdecode using this value
 #define  CLASS_NAME  "dec"        ///< The device class -- this is a character device driver
 
 
 MODULE_LICENSE("GPL");            ///< The license type -- this affects available functionality
 MODULE_AUTHOR("Matthew Callahan");    ///< The author -- visible when you use modinfo
-MODULE_DESCRIPTION("A device to decode repeat code messages over UART");  ///< The description -- see modinfo
+MODULE_DESCRIPTION("A device to decode repeat code messages");  ///< The description -- see modinfo
 MODULE_VERSION("0.1");            ///< A version number to inform users
 #define IN_BUFF_SIZE 769
 static int    majorNumber;                  ///< Stores the device number -- determined automatically
@@ -59,7 +59,7 @@ static struct file_operations fops =
  *  @return returns 0 if successful
  */
 static int __init decodeInit(void){
-   printk(KERN_INFO "Decode: Initializing the Encoding module\n");
+   printk(KERN_INFO "Decode: Initializing the Decoding module\n");
 
    // Try to dynamically allocate a major number for the device -- more difficult but worth it
    majorNumber = register_chrdev(0, DEVICE_NAME, &fops);
@@ -147,23 +147,23 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
  *  @param offset The offset if required
  */
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
-  //only take the first 256
+  //don't overfill the buffer
   if(len>IN_BUFF_SIZE)
     len=IN_BUFF_SIZE;
   unsigned long ret;
   ret=copy_from_user(temp,buffer,len);
-  temp[len-1]='\0';
+  temp[len-1]='\0';//ensure there is an end on the string
   short i=0;
-  char first,second,third;
+  char first,second,third;//prealocate variables
   
-  while(temp[i]){
+  while(temp[i]){//go until null termination
     first=temp[i];
     second=temp[i+1];
     third=temp[i+2];
     message[i/3]=(first&second&third)|((~first)&second&third)|(first&(~second)&third)|(first&second&(~third));
     i+=3;
   }
-  messageSize=i/3;
+  messageSize=i/3;//length is decreased by factor of three
   printk(KERN_INFO "Decode: prepared message from UART");
   return len;
 }

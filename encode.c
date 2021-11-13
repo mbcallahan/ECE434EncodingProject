@@ -16,20 +16,20 @@
 #include <linux/uaccess.h>          // Required for the copy to user function
 
 
-#define  DEVICE_NAME "UARTencode"    ///< The device will appear at /dev/ebbchar using this value
+#define  DEVICE_NAME "UARTencode"    ///< The device will appear at /dev/UARTencode using this value
 #define  CLASS_NAME  "enc"        ///< The device class -- this is a character device driver
 
 
 MODULE_LICENSE("GPL");            ///< The license type -- this affects available functionality
 MODULE_AUTHOR("Matthew Callahan");    ///< The author -- visible when you use modinfo
-MODULE_DESCRIPTION("A device to encode repeat code messages over UART");  ///< The description -- see modinfo
+MODULE_DESCRIPTION("A device to encode repeat code messages with a character device");  ///< The description -- see modinfo
 MODULE_VERSION("0.1");            ///< A version number to inform users
 
 static int    majorNumber;                  ///< Stores the device number -- determined automatically
-static char   message[769] = {0};           ///< Memory for the string that is passed from userspace
+static char   message[769] = {0};           ///< Memory for the string that is passed from userspace it accepts a 256 character string which it tripples
 static char temp[256]={0};
 static short  messageSize;              ///< Used to remember the size of the string stored
-static int    numberOpens = 0;              ///< Counts the number of times the device is opened
+static int    numberOpens = 0;              ///< Counts the number of times the device is opened for debugging purposes
 static struct class*  encodeClass  = NULL; ///< The device-driver class struct pointer
 static struct device* encodeDevice = NULL; ///< The device-driver device struct pointer
 
@@ -110,7 +110,7 @@ static void __exit encodeExit(void){
 static int dev_open(struct inode *inodep, struct file *filep){
    numberOpens++;
 
-   printk(KERN_INFO "EBBChar: Device has been opened %d time(s)\n", numberOpens);
+   printk(KERN_INFO "Encode: Device has been opened %d time(s)\n", numberOpens);
    return 0;
 }
 
@@ -126,14 +126,14 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
    int error_count = 0;
    // copy_to_user has the format ( * to, *from, size) and returns 0 on success
    error_count = copy_to_user(buffer, message, messageSize);
-   int sendLength=messageSize;
-   messageSize=0;
+   int sendLength=messageSize;//store true message length so cat works
+   messageSize=0;//zero message length so message is not repeated
    if (error_count==0){            // if true then have success
-      printk(KERN_INFO "EBBChar: Sent %d characters to the user\n",sendLength);
+      printk(KERN_INFO "Encode: Sent %d characters to the user\n",sendLength);
       return (sendLength);  // clear the position to the start and return 0
    }
    else {
-      printk(KERN_INFO "EBBChar: Failed to send %d characters to the user\n", error_count);
+      printk(KERN_INFO "Eencode: Failed to send %d characters to the user\n", error_count);
       return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
    }
 }
@@ -159,7 +159,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
     message[3*i+2]=message[3*i+1]=message[3*i]=temp[i];
   i++;
   }
-  message[3*i]='\0';//end the string
+  message[3*i]='\0';//end the string so that later characters aren't seen and don't have to be overwritten
   messageSize=i*3+1;//length is increased by factor of three by encoding, add one for the string termination for linux reasons
   printk(KERN_INFO "Encode: prepared message for UART with i = %d",i);
   return len;
