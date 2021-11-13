@@ -16,7 +16,7 @@
 #include <linux/uaccess.h>          // Required for the copy to user function
 
 
-#define  DEVICE_NAME "UARTRead"    ///< The device will appear at /dev/ebbchar using this value
+#define  DEVICE_NAME "UARTdecode"    ///< The device will appear at /dev/ebbchar using this value
 #define  CLASS_NAME  "dec"        ///< The device class -- this is a character device driver
 
 
@@ -153,7 +153,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
   unsigned long ret;
   ret=copy_from_user(temp,buffer,len);
   temp[len-1]='\0';
-  int i=0;
+  short i=0;
   char first,second,third;
   
   while(temp[i]){

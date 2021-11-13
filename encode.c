@@ -16,7 +16,7 @@
 #include <linux/uaccess.h>          // Required for the copy to user function
 
 
-#define  DEVICE_NAME "UARTWrite"    ///< The device will appear at /dev/ebbchar using this value
+#define  DEVICE_NAME "UARTencode"    ///< The device will appear at /dev/ebbchar using this value
 #define  CLASS_NAME  "enc"        ///< The device class -- this is a character device driver
 
 

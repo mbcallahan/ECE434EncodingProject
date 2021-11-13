@@ -1,0 +1,3 @@
+#rules for repeat encoder and decoder
+KERNEL=="UARTencode", SUBSYSTEM="enc", MODE="0666"
+KERNEL=="UARTdecode", SUBSYSTEM="dec", MODE="0666"

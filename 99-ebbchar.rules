@@ -1,2 +1,0 @@
-#Rules file for the ebbchar device driver
-KERNEL=="encode", SUBSYSTEM=="ebb", MODE="0666"
