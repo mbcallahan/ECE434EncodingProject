@@ -15,6 +15,7 @@
 #include <linux/fs.h>             // Header for the Linux file system support
 #include <linux/uaccess.h>          // Required for the copy to user function
 
+
 #define  DEVICE_NAME "UARTWrite"    ///< The device will appear at /dev/ebbchar using this value
 #define  CLASS_NAME  "enc"        ///< The device class -- this is a character device driver
 
@@ -93,13 +94,12 @@ static int __init encodeInit(void){
  *  Similar to the initialization function, it is static. The __exit macro notifies that if this
  *  code is used for a built-in driver (not a LKM) that this function is not required.
  */
-static void __exit encodeExit(void){
-  kvfree(message);kvfree(temp);
+static void __exit encodeExit(void){  
    device_destroy(encodeClass, MKDEV(majorNumber, 0));     // remove the device
    class_unregister(encodeClass);                          // unregister the device class
    class_destroy(encodeClass);                             // remove the device class
    unregister_chrdev(majorNumber, DEVICE_NAME);             // unregister the major number
-   printk(KERN_INFO "EBBChar: Goodbye from the LKM!\n");
+   printk(KERN_INFO "Encode: Goodbye from the LKM!\n");
 }
 
 /** @brief The device open function that is called each time the device is opened
@@ -129,7 +129,7 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
    int sendLength=messageSize;
    messageSize=0;
    if (error_count==0){            // if true then have success
-      printk(KERN_INFO "EBBChar: Sent %d characters to the user\n", messageSize);
+      printk(KERN_INFO "EBBChar: Sent %d characters to the user\n",sendLength);
       return (sendLength);  // clear the position to the start and return 0
    }
    else {
@@ -152,13 +152,16 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
     len=256;
   unsigned long ret;
   ret=copy_from_user(temp,buffer,len);
-  int i=0; 
+  temp[len-1]='\0';//force null terminator
+  short i=0; 
   //tripple message
-  for( i = 0; i < len; i++){
+  while(temp[i]){
     message[3*i+2]=message[3*i+1]=message[3*i]=temp[i];
+  i++;
   }
-  messageSize=ret*3;//length is increased by factor of three by encoding
-  printk(KERN_INFO "Encode: prepared message for UART");
+  message[3*i]='\0';//end the string
+  messageSize=i*3+1;//length is increased by factor of three by encoding, add one for the string termination for linux reasons
+  printk(KERN_INFO "Encode: prepared message for UART with i = %d",i);
   return len;
 }
 

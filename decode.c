@@ -15,6 +15,7 @@
 #include <linux/fs.h>             // Header for the Linux file system support
 #include <linux/uaccess.h>          // Required for the copy to user function
 
+
 #define  DEVICE_NAME "UARTRead"    ///< The device will appear at /dev/ebbchar using this value
 #define  CLASS_NAME  "dec"        ///< The device class -- this is a character device driver
 
@@ -93,8 +94,7 @@ static int __init decodeInit(void){
  *  Similar to the initialization function, it is static. The __exit macro notifies that if this
  *  code is used for a built-in driver (not a LKM) that this function is not required.
  */
-static void __exit decodeExit(void){
-    kvfree(message);kvfree(temp);
+static void __exit decodeExit(void){   
    device_destroy(decodeClass, MKDEV(majorNumber, 0));     // remove the device
    class_unregister(decodeClass);                          // unregister the device class
    class_destroy(decodeClass);                             // remove the device class
@@ -152,16 +152,18 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
     len=IN_BUFF_SIZE;
   unsigned long ret;
   ret=copy_from_user(temp,buffer,len);
+  temp[len-1]='\0';
   int i=0;
   char first,second,third;
-  //tripple message
-  for( i = 0; i < len; i+=3){
+  
+  while(temp[i]){
     first=temp[i];
     second=temp[i+1];
     third=temp[i+2];
     message[i/3]=(first&second&third)|((~first)&second&third)|(first&(~second)&third)|(first&second&(~third));
+    i+=3;
   }
-  messageSize=ret/3;
+  messageSize=i/3;
   printk(KERN_INFO "Decode: prepared message from UART");
   return len;
 }
